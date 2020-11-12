@@ -1,6 +1,14 @@
 const mongoose = require('mongoose');
 const sessionModel = require('../models/Sessions');
 const accountModel = require('../models/Account');
+const transactionModel = require('../models/Transactions');
+const bankModel = require('../models/CentralBank');
+const fetch = require('node-fetch');
+const fs = require('fs');
+const jose = require('node-jose');
+const abortController = require('abort-controller');
+
+require('dotenv').config();
 
 exports.RequestBodyIsValidJson = (err, req, res, next) => {
     // body-parser will set this to 400 if the json is in error
@@ -230,4 +238,35 @@ exports.processTransactions = async() => {
 
     // Call same function again after 1 sec
     setTimeout(exports.processTransactions, 1000)
+}
+
+exports.refreshBanksFromCentralBank = async() => {
+
+    try {
+        console.log('Refreshing banks');
+
+        console.log('Attempting to contact central bank at ' + `${process.env.CENTRAL_BANK_URL}/banks`)
+        banks = await fetch(`${process.env.CENTRAL_BANK_URL}/banks`, {
+            headers: { 'Api-Key': process.env.CENTRAL_BANK_API_KEY }
+        })
+            .then(responseText => responseText.json())
+        console.log(banks);
+        // Delete all old banks
+        await bankModel.deleteMany()
+
+        // Create new bulk object
+        const bulk = bankModel.collection.initializeUnorderedBulkOp();
+
+        // Add banks to queue to be inserted into DB
+        banks.forEach(bank => {
+            bulk.insert(bank);
+        })
+
+        // Start bulk insert
+        await bulk.execute();
+    } catch (e) {
+        return { error: e.message }
+    }
+
+    return true
 }

@@ -1,13 +1,6 @@
-const router = require('express').Router();
-const accountModel = require('../models/Account');
-const { verifyToken, refreshBanksFromCentralBank } = require('../middlewares/middlewares');
-const transactionModel = require('../models/Transactions');
-const sessionModel = require('../models/Sessions');
-const userModel = require('../models/User');
-const bankModel = require('../models/CentralBank');
-const fs = require('fs');
-const axios = require('axios'); const jose = require('node-jose');
-const fetch = require('node-fetch');
+const router = require('express').Router(); const accountModel = require('../models/Account'); const { verifyToken, refreshBanksFromCentralBank } = require('../middlewares/middlewares'); const transactionModel =
+    require('../models/Transactions'); const sessionModel = require('../models/Sessions'); const userModel = require('../models/User'); const bankModel = require('../models/CentralBank'); const fs = require('fs'); const axios =
+    require('axios'); const jose = require('node-jose'); const fetch = require('node-fetch');
 
 require('dotenv').config();
 
@@ -20,21 +13,18 @@ router.get('/', verifyToken, async(req, res) => {
         const session = await sessionModel.findOne({ _id: sessionId });
 
         // Find the account associated with the user
+
         const accountId = await accountModel.findOne({user: session.userId});
-        console.log(accountId.accountNumber);
+
         // Find all transactions
         const sentTransaction = await transactionModel.find({ userId: accountId.user })
 
-        const receivedTransaction = await transactionModel.find({accountTo: accountId.accountNumber});
-
-        if (!sentTransaction || !receivedTransaction) {
+        if (!sentTransaction) {
             res.status(404).json({ error: "You have no logged transactions" });
+        } else {
+            console.log("Displaying transactions")
+            res.status(200).json({transactions: sentTransaction});
         }
-        console.log("Displaying transactions")
-        res.status(200).json({
-            transactions: sentTransaction,
-            received: receivedTransaction
-        });
     } catch (e) {
         return res.status(400).json({error: "error"})
     }
@@ -43,8 +33,6 @@ router.post('/', verifyToken, async(req, res, next) => {
     let banks = [],
         statusDetail
     const loggedUserAccount = await accountModel.findOne({ accountNumber: req.body.accountFrom});
-    console.log("USer balance.. " + loggedUserAccount.balance);
-    console.log("Req account " + req.body.accountFrom);
     // Check for sufficient funds
     if (req.body.amount > loggedUserAccount.balance) {
         return res.status(402).json({ error: 'Insufficient funds' });
@@ -217,8 +205,7 @@ router.post('/b2b', async (req, res, next) => {
 
     // Write original amount to amount
     let amount = transaction.amount
-    console.log(accountTo.currency + " AccountTO Currency");
-    console.log("Transaction Currency " + transaction.currency);
+
     // Convert amount from another currency, if needed
     if (accountTo.currency !== transaction.currency) {
 
@@ -242,7 +229,7 @@ router.post('/b2b', async (req, res, next) => {
     const accountToOwner = await userModel.findOne({_id: accountTo.user})
 
     // Increase accountTo's balance
-    console.log(`/b2b: Increasing ${accountToOwner.name}'s account ${accountTo.accountNumber} by ${amount / 100} ${accountTo.currency}`)
+    console.log(`/b2b: Increasing ${accountToOwner.name}'s account ${accountTo.account_number} by ${amount / 100} ${accountTo.currency}`)
     accountTo.balance = accountTo.balance + amount
 
     // Save changes to DB
