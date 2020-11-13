@@ -140,9 +140,10 @@ paths:
             examples:
               createTransaction:
                 value:
-                  accountFrom: 7da3851546037313642
-                  accountTo: 7da3851546037313641
-                  explanation: raha
+                  accountFrom: 8a85878266633563012
+                  accountTo: 8a85878266633563013
+                  currency: MYR
+                  explanation: Sülearvuti järelmaks
                   amount: 50
         required: true
       tags:
@@ -191,6 +192,16 @@ paths:
                   value:
                     error: Insufficient funds
           description: Insufficent funds
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errorResponse'
+              examples:
+                accountNotFound:
+                  value:
+                    error: 'Account not found '
+          description: Account Not Found
       security:
         -
           Bearer: []
@@ -443,9 +454,9 @@ components:
           description: ''
           type: string
       example:
-        name: some text
-        password: some text
-        username: some text
+        name: Reet Linna
+        password: qwerty12345
+        username: linna112
     errorResponse:
       title: Error response
       description: Generic error response
@@ -513,8 +524,8 @@ components:
           description: ''
           type: string
       example:
-        username: some text
-        password: some text
+        password: qwerty12345
+        username: linna112
     deleteSessionRequest:
       description: ''
       type: object
@@ -566,11 +577,14 @@ components:
         accountFrom:
           description: Sender
           type: string
-      example:
-        accountFrom: 7da3851546037313642
-        accountTo: 7da3851546037313641
-        explanation: raha
-        amount: 50
+      example: |-
+        {
+            "accountFrom": "7da3851546037313642",
+            "accountTo": "8a85878266633563012",
+            "explanation": "Sülearvuti järelmaks",
+            "currency": "MYR"
+            "amount": 50
+        }
     successfulTransaction:
       title: Root Type for successfulTransaction
       description: ''
