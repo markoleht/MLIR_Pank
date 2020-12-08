@@ -6,6 +6,7 @@ const bankModel = require('../models/CentralBank');
 const fetch = require('node-fetch');
 const fs = require('fs');
 const jose = require('node-jose');
+const ncok = require('nock')
 const abortController = require('abort-controller');
 
 require('dotenv').config();
@@ -244,7 +245,37 @@ exports.refreshBanksFromCentralBank = async() => {
 
     try {
         console.log('Refreshing banks');
-
+        if(process.env.TEST_MODE === 'true'){
+            console.log("Mocking central bank")
+            const scope = nock(process.env.CENTRAL_BANK_URL)
+            .get('/banks', {
+                headers: { 'Api-Key': process.env.CENTRAL_BANK_API_KEY }
+            })
+            .reply(200, [
+                {
+                  // The first bank is the personal bank of this bank that is used for testing transfers within the bank.
+                  "name": "leht marko pank",
+                  "owners": "Indrek and Marko",
+                  "jwksUrl": "http://localhost:8008/api/transactions/jwks",
+                  "transactionUrl": "http://localhost:8008/api/transactions/b2b",
+                  "bankPrefix": "8a8"
+                  },
+                {
+                  "name": "Bank A",
+                  "owners": "John Doe",
+                  "jwksUrl": "https://banka.com/jwks",
+                  "transactionUrl": "https://banka.com/transactions/b2b",
+                  "bankPrefix": "aaa"
+                },
+                {
+                  "name": "Bank B",
+                  "owners": "Jane Doe",
+                  "jwksUrl": "https://bankb.com/jwks",
+                  "transactionUrl": "https://bankb.com/transactions/b2b",
+                  "bankPrefix": "bbb"
+                }
+              ])           
+        }
         console.log('Attempting to contact central bank at ' + `${process.env.CENTRAL_BANK_URL}/banks`)
         banks = await fetch(`${process.env.CENTRAL_BANK_URL}/banks`, {
             headers: { 'Api-Key': process.env.CENTRAL_BANK_API_KEY }

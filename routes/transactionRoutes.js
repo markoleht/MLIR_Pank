@@ -1,6 +1,13 @@
-const router = require('express').Router(); const accountModel = require('../models/Account'); const { verifyToken, refreshBanksFromCentralBank } = require('../middlewares/middlewares'); const transactionModel =
-    require('../models/Transactions'); const sessionModel = require('../models/Sessions'); const userModel = require('../models/User'); const bankModel = require('../models/CentralBank'); const fs = require('fs'); const axios =
-    require('axios'); const jose = require('node-jose'); const fetch = require('node-fetch');
+const router = require('express').Router(); 
+const accountModel = require('../models/Account'); 
+const { verifyToken, refreshBanksFromCentralBank } = require('../middlewares/middlewares'); 
+const transactionModel = require('../models/Transactions'); 
+const sessionModel = require('../models/Sessions'); 
+const userModel = require('../models/User'); 
+const bankModel = require('../models/CentralBank'); 
+const fs = require('fs'); 
+const axios = require('axios'); const jose = require('node-jose'); 
+const fetch = require('node-fetch');
 
 require('dotenv').config();
 
@@ -37,7 +44,9 @@ router.post('/', verifyToken, async(req, res, next) => {
     if (req.body.amount > loggedUserAccount.balance) {
         return res.status(402).json({ error: 'Insufficient funds' });
     }
-
+    if (!loggedUserAccount) {
+        return res.status(404).json({ error: 'Account not found' })
+    }
     // Check for invalid amounts
     if (!req.body.amount || req.body.amount <= 0) {
         return res.status(400).json({ error: 'Invalid amount' });
@@ -73,7 +82,7 @@ router.post('/', verifyToken, async(req, res, next) => {
 
             // Check for destination bank once more
             if (!bankTo) {
-                return res.status(400).json({ error: 'Invalid accountTo blabla' })
+                return res.status(400).json({ error: 'This bank does not exist.' })
             }
         }
     } else {
