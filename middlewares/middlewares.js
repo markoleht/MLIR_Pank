@@ -253,7 +253,8 @@ exports.refreshBanksFromCentralBank = async() => {
             })
             .reply(200, [
                 {
-                  // The first bank is the personal bank of this bank that is used for testing transfers within the bank.
+                  // This bank is the personal bank of this bank that is used for testing transfers within the bank.
+                  // Edit the contents to fit if something changes.
                   "name": "leht marko pank",
                   "owners": "Indrek and Marko",
                   "jwksUrl": "http://localhost:8008/api/transactions/jwks",
