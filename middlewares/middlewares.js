@@ -245,7 +245,7 @@ exports.refreshBanksFromCentralBank = async() => {
 
     try {
         console.log('Refreshing banks');
-        if(process.env.TEST_MODE === 'true'){
+        if(process.env.TEST_STATUS === 'true'){
             console.log("Mocking central bank")
             const scope = nock(process.env.CENTRAL_BANK_URL)
             .get('/banks', {
