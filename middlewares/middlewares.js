@@ -6,7 +6,7 @@ const bankModel = require('../models/CentralBank');
 const fetch = require('node-fetch');
 const fs = require('fs');
 const jose = require('node-jose');
-const ncok = require('nock')
+const nock = require('nock')
 const abortController = require('abort-controller');
 
 require('dotenv').config();
@@ -166,6 +166,15 @@ exports.processTransactions = async() => {
                 transaction.statusDetail = 'Server is not responding'
                 transaction.save();
             }, 1000)
+            
+             if (process.env.TEST_STATUS === 'true') {
+                console.log("Mocking the other bank")
+                const nockUrl = new URL(bankTo.transactionUrl)
+                scope = nock(`${nockUrl.protocol}//${nockUrl.host}`)
+                    .persist()
+                    .post(nockUrl.pathname)
+                    .reply(200, {receiverName: 'kana'})
+             }
 
             // Actually send the request
             serverResponseAsObject = await fetch(bankTo.transactionUrl, {
@@ -176,10 +185,7 @@ exports.processTransactions = async() => {
                     'Content-Type': 'application/json'
                 }
             })
-
-            // Get server response as plain text
             serverResponseAsPlainText = await serverResponseAsObject.text()
-
         } catch (e) {
             console.log('loop: Making request to another bank failed with the following message: ' + e.message)
         }
@@ -248,9 +254,7 @@ exports.refreshBanksFromCentralBank = async() => {
         if(process.env.TEST_STATUS === 'true'){
             console.log("Mocking central bank")
             const scope = nock(process.env.CENTRAL_BANK_URL)
-            .get('/banks', {
-                headers: { 'Api-Key': process.env.CENTRAL_BANK_API_KEY }
-            })
+            .get('/banks')
             .reply(200, [
                 {
                   // This bank is the personal bank of this bank that is used for testing transfers within the bank.
@@ -274,7 +278,7 @@ exports.refreshBanksFromCentralBank = async() => {
                   "jwksUrl": "https://bankb.com/jwks",
                   "transactionUrl": "https://bankb.com/transactions/b2b",
                   "bankPrefix": "bbb"
-                }
+                },
               ])           
         }
         console.log('Attempting to contact central bank at ' + `${process.env.CENTRAL_BANK_URL}/banks`)
